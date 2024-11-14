@@ -8,3 +8,9 @@ A couple steps have to be performed to prepare the Elasticsearch database locall
 
 ## Running the code
 To run the code simply run: `python3 search.py` and then follow instructions on the screen
+
+## Cleanup
+* Once you are done running the code, cleanup the elastic local instance with `cd elastic-start-local && ./uninstall.sh`
+
+# Limitations
+* **Case sensitivity:** Names have to be unique but are case sensitive - i.e. "Alice Smith" and "Alice smith" are considered 2 different unique names. Similarly searching names is also case sensitive - searching for "alic" won't return "Alice"
