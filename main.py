@@ -3,7 +3,7 @@ from elasticsearch import Elasticsearch
 class Phonebook:
     def __init__(self):
         # Setup connection to the local database; properly, the API key would be stored in a key vault or at least in .env file but for the sake of this task, it is very naughtily stored as plaintext within the code
-        self.es = Elasticsearch("http://localhost:9200/", api_key="N0ItTEtwTUJwOVpwcU41VWRiZVU6YkpIOFJoZmpUb1NZM3o0SEhVeFJ4dw==")
+        self.es = Elasticsearch("http://localhost:9200/", api_key="<YOUR_API_KEY_HERE>")
         self.index_name = "phonebook"
 
         # If phonebook index doesn't exist, create it
@@ -11,26 +11,28 @@ class Phonebook:
             self.es.indices.create(index=self.index_name, mappings={
                 "properties": {
                     "name": {"type": "keyword"},
-                    "phone_number": {"type": "text"}
+                    "phone_number": {"type": "keyword"}
             }})
 
-    def add_contact(self, name, phone_number):
-        # Function to add new contact with a phone number, each contact has to have a unique name but multiple names can share the same number
-        search_check = self.es.search(index=self.index_name, query={"bool": {"filter": {"term": {"name": name}}}})  
+    def add_contact(self, name, phone_number) -> bool:
+        # Function to add new contact with a phone number, 
+        search_check = self.es.search(index=self.index_name, query={"bool": {"filter": {"term": {"phone_number": phone_number}}}})  
         if not search_check['hits']['hits']:
             self.es.index(index=self.index_name, body={"name": name, "phone_number": phone_number})
-            print(f"Added {name} to the phonebook")
+            print(f"Added {phone_number} to the phonebook")
+            return True
         else:
-            print(f"{name} already exists in the phonebook")
+            print(f"{phone_number} already exists in the phonebook")
+            return False
 
-    def search_contact(self, initials):
+    def search_contact(self, initials) -> list[str]:
         # Function to search existing contacts by name (or part of it), prints a list of dicts with name and number of all contacts which match the search criteria
-        query = {"query": { "regexp": {"name": f".*{initials}.*"}}}
+        query = {"query": { "regexp": {"name": f"{initials}.*"}}}
         response = self.es.search(index=self.index_name, body=query)
 
-        # Unpack Elasticsearch response
+        # Unpack Elasticsearch response and return a list of phone numbers
         results = response['hits']['hits']
-        return [result['_source'] for result in results]
+        return [result['_source']["phone_number"] for result in results]
 
 if __name__ == "__main__":
     # On run, initialise Phonebook class
